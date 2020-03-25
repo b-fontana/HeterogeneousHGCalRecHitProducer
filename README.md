@@ -1,0 +1,3 @@
+Heterogeneous producer responsible for converting HGCUncalibratedRecHits into HGCRecHits within the scope of the next phase CMS calorimeter, the High Granularity CALorimeter (HGCAL).
+
+Compiled with the CMSSW_11_1_0_pre4_Patatrack release in a ```UserCode/``` folder. Other CMSSW subpackages (not included in this repository) might need to be tweaked for the producer to compile. Contact me at ```bruno.alves at cern.ch``` if needed.
