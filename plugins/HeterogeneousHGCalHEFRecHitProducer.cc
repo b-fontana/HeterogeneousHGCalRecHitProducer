@@ -68,7 +68,6 @@ void HeterogeneousHGCalHEFRecHitProducer::acquire(edm::Event const& event, edm::
 
   unsigned int nhits = hits_hef.size();
   std::cout << "HEF hits: " << nhits << std::endl;
-
   convert_collection_data_to_soa_(hits_hef, old_soa_, nhits);
 
   kmdata_ = new KernelModifiableData<HGCUncalibratedRecHitSoA, HGCRecHitSoA>(nhitsmax_, stride_, old_soa_, d_oldhits_, d_newhits_, d_newhits_final_, h_newhits_);
@@ -76,12 +75,6 @@ void HeterogeneousHGCalHEFRecHitProducer::acquire(edm::Event const& event, edm::
   kernel_manager.run_kernels(h_kcdata_, d_kcdata_);
   new_soa_ = kernel_manager.get_output();
   
-  printf("NEW: \n");
-  for(int ii=0; ii<10000; ++ii)
-    {
-      printf("%u\n", new_soa_->son[ii]);
-    }
-
   //print_to_histograms(kmdata_->h_out, histo1_, histo2_, histo3_, histo4_, nhits);
   
   rechits_ = std::make_unique< HGCRecHitCollection >();

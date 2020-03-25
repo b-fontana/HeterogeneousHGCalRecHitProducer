@@ -22,7 +22,6 @@ namespace memory {
     void device(KernelConstantData<HGCeeUncalibratedRecHitConstantData> *kcdata, cms::cuda::device::unique_ptr<double[]>& mem) {
       const std::vector<int> nelements = {kcdata->data.s_hgcEE_fCPerMIP_, kcdata->data.s_hgcEE_cce_, kcdata->data.s_hgcEE_noise_fC_, kcdata->data.s_rcorr_, kcdata->data.s_weights_, kcdata->data.s_waferTypeL_};
       auto memsizes = get_memory_sizes_(nelements, 5, 0, 1);
-
       mem = cms::cuda::make_device_unique<double[]>(std::get<0>(memsizes), 0);
 
       kcdata->data.hgcEE_fCPerMIP_ = mem.get();
@@ -42,7 +41,6 @@ namespace memory {
     void device(KernelConstantData<HGChefUncalibratedRecHitConstantData> *kcdata, cms::cuda::device::unique_ptr<double[]>& mem) {
       const std::vector<int> nelements = {kcdata->data.s_hgcHEF_fCPerMIP_, kcdata->data.s_hgcHEF_cce_, kcdata->data.s_hgcHEF_noise_fC_, kcdata->data.s_rcorr_, kcdata->data.s_weights_, kcdata->data.s_waferTypeL_};
       auto memsizes = get_memory_sizes_(nelements, 5, 0, 1);
-
       mem = cms::cuda::make_device_unique<double[]>(std::get<0>(memsizes), 0);
 
       kcdata->data.hgcHEF_fCPerMIP_ = mem.get();
@@ -65,7 +63,7 @@ namespace memory {
 
       mem = cms::cuda::make_device_unique<double[]>(std::get<0>(memsizes), 0);
 
-      kcdata->data.weights_         = mem.get();
+      kcdata->data.weights_  = mem.get();
       kcdata->data.nbytes = std::get<0>(memsizes);
       kcdata->data.ndelem = std::get<1>(memsizes) + 3;
       kcdata->data.nfelem = std::get<2>(memsizes) + 0;
@@ -77,10 +75,9 @@ namespace memory {
     void device(const int& nhits, HGCUncalibratedRecHitSoA* soa1, HGCUncalibratedRecHitSoA* soa2, HGCRecHitSoA* soa3, cms::cuda::device::unique_ptr<float[]>& mem)
     {
       std::vector<int> sizes = {6*sizeof(float), 3*sizeof(uint32_t),                     //soa1
-				       6*sizeof(float), 3*sizeof(uint32_t),                     //soa2
-				       3*sizeof(float), 2*sizeof(uint32_t), 1*sizeof(uint8_t)}; //soa3
+				6*sizeof(float), 3*sizeof(uint32_t),                     //soa2
+				3*sizeof(float), 2*sizeof(uint32_t), 1*sizeof(uint8_t)}; //soa3
       int size_tot = std::accumulate( sizes.begin(), sizes.end(), 0);
-
       mem = cms::cuda::make_device_unique<float[]>(nhits * size_tot, 0);
 
       soa1->amplitude     = mem.get();
@@ -106,7 +103,7 @@ namespace memory {
       soa3->energy        = reinterpret_cast<float*>(soa2->id + nhits);
       soa3->time          = soa3->energy       + nhits;
       soa3->timeError     = soa3->time         + nhits;
-      soa3->id            = reinterpret_cast<uint32_t*>(soa2->id + nhits);
+      soa3->id            = reinterpret_cast<uint32_t*>(soa3->timeError + nhits);
       soa3->flagBits      = soa3->id           + nhits;
       soa3->son           = reinterpret_cast<uint8_t*>(soa3->flagBits + nhits);
 
@@ -119,7 +116,6 @@ namespace memory {
     {
       const std::vector<int> nelements = {kcdata->data.s_hgcEE_fCPerMIP_, kcdata->data.s_hgcEE_cce_, kcdata->data.s_hgcEE_noise_fC_, kcdata->data.s_rcorr_, kcdata->data.s_weights_, kcdata->data.s_waferTypeL_};
       auto memsizes = get_memory_sizes_(nelements, 5, 0, 1);
-
       mem = cms::cuda::make_host_noncached_unique<double[]>(std::get<0>(memsizes), 0);
 
       kcdata->data.hgcEE_fCPerMIP_ = mem.get();
@@ -140,7 +136,6 @@ namespace memory {
     {
       const std::vector<int> nelements = {kcdata->data.s_hgcHEF_fCPerMIP_, kcdata->data.s_hgcHEF_cce_, kcdata->data.s_hgcHEF_noise_fC_, kcdata->data.s_rcorr_, kcdata->data.s_weights_, kcdata->data.s_waferTypeL_};
       auto memsizes = get_memory_sizes_(nelements, 5, 0, 1);
-
       mem = cms::cuda::make_host_noncached_unique<double[]>(std::get<0>(memsizes), 0);
 
       kcdata->data.hgcHEF_fCPerMIP_ = mem.get();
@@ -161,10 +156,9 @@ namespace memory {
     {
       const std::vector<int> nelements = {kcdata->data.s_weights_};
       auto memsizes = get_memory_sizes_(nelements, 1, 0, 0);
-
       mem = cms::cuda::make_host_noncached_unique<double[]>(std::get<0>(memsizes), 0);
 
-      kcdata->data.weights_         = mem.get();
+      kcdata->data.weights_ = mem.get();
       kcdata->data.nbytes = std::get<0>(memsizes);
       kcdata->data.ndelem = std::get<1>(memsizes) + 3;
       kcdata->data.nfelem = std::get<2>(memsizes) + 0;
@@ -175,35 +169,32 @@ namespace memory {
 
     void host(const int& nhits, HGCUncalibratedRecHitSoA* soa, cms::cuda::host::noncached::unique_ptr<float[]>& mem)
     {
-      int size1 = (int)6*sizeof(float);
-      int size2 = (int)3*sizeof(uint32_t);
-      int size_tot = size1 + size2;
+      std::vector<int> sizes = { 6*sizeof(float), 3*sizeof(uint32_t) };
+      int size_tot = std::accumulate(sizes.begin(), sizes.end(), 0);
       mem = cms::cuda::make_host_noncached_unique<float[]>(nhits * size_tot, 0);
 
-      soa->amplitude     = (float*)(mem.get());
-      soa->pedestal      = (float*)(soa->amplitude    + nhits);
-      soa->jitter        = (float*)(soa->pedestal     + nhits);
-      soa->chi2          = (float*)(soa->jitter       + nhits);
-      soa->OOTamplitude  = (float*)(soa->chi2         + nhits);
-      soa->OOTchi2       = (float*)(soa->OOTamplitude + nhits);
-      soa->flags         = (uint32_t*)(soa->OOTchi2   + nhits);
-      soa->aux           = (uint32_t*)(soa->flags     + nhits);
-      soa->id            = (uint32_t*)(soa->aux       + nhits);
+      soa->amplitude     = mem.get();
+      soa->pedestal      = soa->amplitude    + nhits;
+      soa->jitter        = soa->pedestal     + nhits;
+      soa->chi2          = soa->jitter       + nhits;
+      soa->OOTamplitude  = soa->chi2         + nhits;
+      soa->OOTchi2       = soa->OOTamplitude + nhits;
+      soa->flags         = reinterpret_cast<uint32_t*>(soa->OOTchi2 + nhits);
+      soa->aux           = soa->flags        + nhits;
+      soa->id            = soa->aux          + nhits;
       soa->nbytes = size_tot;
     }
 
     void host(const int& nhits, HGCRecHitSoA* soa, cms::cuda::host::unique_ptr<float[]>& mem)
     {
-      int size1 = (int)(3*sizeof(float));
-      int size2 = (int)(2*sizeof(uint32_t));
-      int size3 = (int)(1*sizeof(uint8_t));
-      int size_tot = size1 + size2 + size3;
+      std::vector<int> sizes = { 3*sizeof(float), 2*sizeof(uint32_t), sizeof(uint8_t) };
+      int size_tot = std::accumulate(sizes.begin(), sizes.end(), 0);
       mem = cms::cuda::make_host_unique<float[]>(nhits * size_tot, 0);
 
       soa->energy     = mem.get();
       soa->time       = soa->energy     + nhits;
       soa->timeError  = soa->time       + nhits;
-      soa->id         = reinterpret_cast<uint32_t*>(soa->time     + nhits);
+      soa->id         = reinterpret_cast<uint32_t*>(soa->timeError + nhits);
       soa->flagBits   = soa->id         + nhits;
       soa->son        = reinterpret_cast<uint8_t*>(soa->flagBits + nhits);
       soa->nbytes = size_tot;
